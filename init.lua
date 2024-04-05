@@ -33,6 +33,9 @@ dofile(vim.g.base46_cache .. "defaults")
 dofile(vim.g.base46_cache .. "statusline")
 
 require "nvchad.autocmds"
+require("telescope").load_extension "fzf"
+require("telescope").load_extension "ui-select"
+require("telescope").load_extension "lsp_handlers"
 
 vim.schedule(function()
   require "mappings"
