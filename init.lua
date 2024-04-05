@@ -38,6 +38,7 @@ require("telescope").load_extension "ui-select"
 require("telescope").load_extension "lsp_handlers"
 require("telescope").load_extension "dap"
 require("telescope").load_extension "cmdline"
+require("telescope").load_extension "git_diffs"
 vim.schedule(function()
   require "mappings"
 end)

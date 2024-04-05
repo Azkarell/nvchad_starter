@@ -85,6 +85,7 @@ return {
       { "nvim-telescope/telescope-ui-select.nvim" },
       { "gbrlsnchs/telescope-lsp-handlers.nvim" },
       { "jonarrien/telescope-cmdline.nvim" },
+      { "paopaol/telescope-git-diffs.nvim" },
     },
     opts = function()
       local conf = require "nvchad.configs.telescope"
@@ -101,6 +102,7 @@ return {
       conf.extensions["lsp_handler"] = {}
       conf.extensions["dap"] = {}
       conf.extensions["cmdline"] = {}
+      conf.extensions["git_diffs"] = {}
     end,
   },
 
@@ -110,7 +112,6 @@ return {
       require("diffview").setup {}
     end,
   },
-  { "rmagatti/auto-session", config = true, lazy = false },
   {
     "hrsh7th/nvim-cmp",
     lazy = false,
@@ -225,50 +226,7 @@ return {
       },
     },
   },
-  {
-    "mrcjkb/rustaceanvim",
-    version = "^3",
-    ft = { "rust" },
-    keys = {
-      { "K", "<cmd>RustLsp hover actions<cr>", desc = "Hover Actions (Rust)" },
-      { "<leader>dr", "<cmd>RustLsp debuggables<cr>", desc = "Run Debuggables (Rust)" },
-    },
-    config = function()
-      vim.g.rustaceanvim = {
-        server = {
-          settings = {
-            ["rust-analyzer"] = {
-              cargo = {
-                loadOutDirsFromCheck = true,
-                runBuildScripts = true,
-              },
-              -- Add clippy lints for Rust.
-              checkOnSave = {
-                allFeatures = true,
-                command = "clippy",
-                extraArgs = { "--no-deps" },
-              },
-              procMacro = {
-                enable = true,
-                ignored = {
-                  ["async-trait"] = { "async_trait" },
-                  ["napi-derive"] = { "napi" },
-                  ["async-recursion"] = { "async_recursion" },
-                },
-              },
-              inlayHints = {
-                enable = true,
-                showParameterNames = true,
-              },
-            },
-          },
-        },
-        dap = {
-          adapter = setup_rust_dap(),
-        },
-      }
-    end,
-  },
+
   {
     "folke/trouble.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
@@ -278,6 +236,10 @@ return {
   },
   {
     "theHamsta/nvim-dap-virtual-text",
+    opts = {},
+  },
+  {
+    "sindrets/diffview.nvim",
     opts = {},
   },
 }

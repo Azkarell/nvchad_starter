@@ -13,7 +13,10 @@ vim.api.nvim_create_autocmd("LspAttach", {
     -- See `:help vim.lsp.*` for documentation on any of the below functions
     local opts = { buffer = ev.buf }
 
+    map("n", "K", vim.lsp.buf.hover, { desc = "Hover" })
     map("n", "<C-k>", vim.lsp.buf.signature_help, opts)
+    map("n", "gd", vim.lsp.buf.definition, { desc = "Go to declaration" })
+    map("n", "gD", vim.lsp.buf.type_definition, { desc = "Go to definition" })
     map({ "n", "v" }, "<space>ca", vim.lsp.buf.code_action, opts)
     map("n", "gr", vim.lsp.buf.references, opts)
     map("n", "<leader>fs", require("telescope.builtin").lsp_dynamic_workspace_symbols, opts)
@@ -59,10 +62,4 @@ vim.keymap.set("n", "<F2>", dap.step_over, { desc = "Debug: Step Over" })
 vim.keymap.set("n", "<F3>", dap.step_out, { desc = "Debug: Step Out" })
 vim.keymap.set("n", "<leader>B", dap.toggle_breakpoint, { desc = "Debug: Toggle Breakpoint" })
 
-vim.keymap.set("n", "<leader>dvo", "<Cmd>DiffviewOpen<Enter>", {
-  desc = "Open Diffview",
-})
-vim.keymap.set("n", "<leader>dvc", "<Cmd>DiffviewClose<Enter>", {
-  desc = "Close Diffview",
-})
 map({ "n", "v" }, ":", "<cmd>Telescope cmdline<cr>", { desc = "Cmdline" })

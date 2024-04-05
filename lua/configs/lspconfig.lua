@@ -7,6 +7,10 @@ local lspconfig = require "lspconfig"
 local masonlspconfig = require "mason-lspconfig"
 local servers = { "html", "cssls", "omnisharp", "angularls" }
 
+local on_attach_wrapper = function(client, bufnr)
+  vim.lsp.inlay_hint.enable(bufnr)
+  on_attach(client, bufnr)
+end
 masonlspconfig.setup {}
 masonlspconfig.setup_handlers {
   -- The first entry (without a key) will be the default handler
@@ -29,11 +33,29 @@ masonlspconfig.setup_handlers {
       },
     }
   end,
+  ["rust_analyzer"] = function()
+    lspconfig["rust_analyzer"].setup {
+      imports = {
+        granularity = {
+          group = "module",
+        },
+        prefix = "self",
+      },
+      cargo = {
+        buildScripts = {
+          enable = true,
+        },
+      },
+      procMacro = {
+        enable = true,
+      },
+    }
+  end,
 }
 
 for _, lsp in ipairs(servers) do
   lspconfig[lsp].setup {
-    on_attach = on_attach,
+    on_attach = on_attach_wrapper,
     on_init = on_init,
     capabilities = capabilities,
   }
