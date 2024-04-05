@@ -1,6 +1,6 @@
 vim.g.base46_cache = vim.fn.stdpath "data" .. "/nvchad/base46/"
 vim.g.mapleader = " "
-
+vim.o.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
 -- bootstrap lazy and all plugins
 local lazypath = vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
 
@@ -36,7 +36,8 @@ require "nvchad.autocmds"
 require("telescope").load_extension "fzf"
 require("telescope").load_extension "ui-select"
 require("telescope").load_extension "lsp_handlers"
-
+require("telescope").load_extension "dap"
+require("telescope").load_extension "cmdline"
 vim.schedule(function()
   require "mappings"
 end)

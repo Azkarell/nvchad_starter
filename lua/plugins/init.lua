@@ -1,3 +1,25 @@
+local setup_rust_dap = function()
+  local ok, mason_registry = pcall(require, "mason-registry")
+  local adapter
+  print "i was here"
+  if ok then
+    -- rust tools configuration for debugging support
+    local codelldb = mason_registry.get_package "codelldb"
+    local extension_path = codelldb:get_install_path() .. "/extension/"
+    local codelldb_path = extension_path .. "adapter/codelldb"
+    local liblldb_path = ""
+    if vim.loop.os_uname().sysname:find "Windows" then
+      liblldb_path = extension_path .. "lldb\\bin\\liblldb.dll"
+    elseif vim.fn.has "mac" == 1 then
+      liblldb_path = extension_path .. "lldb/lib/liblldb.dylib"
+    else
+      liblldb_path = extension_path .. "lldb/lib/liblldb.so"
+    end
+    adapter = require("rustaceanvim.config").get_codelldb_adapter(codelldb_path, liblldb_path)
+  end
+  print(vim.inspect(adapter))
+  return adapter
+end
 return {
   {
     "stevearc/conform.nvim",
@@ -62,12 +84,23 @@ return {
       { "nvim-tree/nvim-web-devicons" },
       { "nvim-telescope/telescope-ui-select.nvim" },
       { "gbrlsnchs/telescope-lsp-handlers.nvim" },
+      { "jonarrien/telescope-cmdline.nvim" },
     },
     opts = function()
       local conf = require "nvchad.configs.telescope"
       conf.extensions["ui-select"] = {
-        require("telescope.themes").get_cursor(),
+        require("telescope.themes").get_dropdown(),
       }
+      conf.extensions["fzf"] = {
+        fuzzy = true,
+        override_generic_sorter = true, -- override the generic sorter
+        override_file_sorter = true, -- override the file sorter
+        case_mode = "smart_case", -- or "ignore_case" or "respect_case"
+        -- the default case_mode is "smart_case"ver
+      }
+      conf.extensions["lsp_handler"] = {}
+      conf.extensions["dap"] = {}
+      conf.extensions["cmdline"] = {}
     end,
   },
 
@@ -75,12 +108,6 @@ return {
     "sindrets/diffview.nvim",
     config = function()
       require("diffview").setup {}
-      vim.keymap.set("n", "<leader>dvo", "<Cmd>DiffviewOpen<Enter>", {
-        desc = "Open Diffview",
-      })
-      vim.keymap.set("n", "<leader>dvc", "<Cmd>DiffviewClose<Enter>", {
-        desc = "Close Diffview",
-      })
     end,
   },
   { "rmagatti/auto-session", config = true, lazy = false },
@@ -98,5 +125,159 @@ return {
       table.insert(conf.sources, 1, { name = "nuget" })
       require("cmp").setup(conf)
     end,
+  },
+  {
+    "akinsho/flutter-tools.nvim",
+    lazy = false,
+    dependencies = { "nvim-lua/plenary.nvim" },
+    config = function()
+      require("flutter-tools").setup {
+        fvm = true,
+        debugger = {
+          enabled = true,
+          run_via_dap = true,
+        },
+      }
+      require("telescope").load_extension "flutter"
+    end,
+  },
+  {
+    "rcarriga/nvim-dap-ui",
+    dependencies = {
+      "mfussenegger/nvim-dap",
+      "nvim-neotest/nvim-nio",
+      "jay-babu/mason-nvim-dap.nvim",
+      "nvim-telescope/telescope-dap.nvim",
+    },
+    lazy = false,
+    config = function()
+      local dap = require "dap"
+      local dapui = require "dapui"
+      require("mason-nvim-dap").setup {
+        -- Makes a best effort to setup the various debuggers with
+        -- reasonable debug configurations
+        automatic_setup = true,
+
+        -- You can provide additional configuration to the handlers,
+        -- see mason-nvim-dap README for more information
+        handlers = {
+          function(config)
+            require("mason-nvim-dap").default_setup(config)
+          end,
+        },
+
+        -- You'll need to check that you have the required things installed
+        -- online, please don't ask me how to install them :)
+        ensure_installed = {},
+      }
+      dapui.setup {
+        -- Set icons to characters that are more likely to work in every terminal.
+        --    Feel free to remove or use ones that you like more! :)
+        --    Don't feel like these are good choices.
+        icons = { expanded = "▾", collapsed = "▸", current_frame = "*" },
+        controls = {
+          icons = {
+            pause = "⏸",
+            play = "▶",
+            step_into = "⏎",
+            step_over = "⏭",
+            step_out = "⏮",
+            step_back = "b",
+            run_last = "▶▶",
+            terminate = "⏹",
+            disconnect = "⏏",
+          },
+        },
+      }
+      dap.listeners.after.event_initialized["dapui_config"] = function()
+        dapui.open {}
+      end
+      dap.listeners.before.event_terminated["dapui_config"] = function()
+        dapui.close {}
+      end
+      dap.listeners.before.event_exited["dapui_config"] = function()
+        dapui.close {}
+      end
+    end,
+  },
+
+  {
+    "folke/neodev.nvim",
+    lazy = false,
+    config = function()
+      require("neodev").setup {
+        library = {
+          plugins = { "nvim-dap-ui", "nvim-treesitter", "plenary.nvim", "telescope.nvim" },
+          types = true,
+        },
+      }
+    end,
+  },
+  {
+    "Saecki/crates.nvim",
+    event = { "BufRead Cargo.toml" },
+    dependencies = {
+      { "nvim-lua/plenary.nvim" },
+    },
+    opts = {
+      src = {
+        cmp = { enabled = true },
+      },
+    },
+  },
+  {
+    "mrcjkb/rustaceanvim",
+    version = "^3",
+    ft = { "rust" },
+    keys = {
+      { "K", "<cmd>RustLsp hover actions<cr>", desc = "Hover Actions (Rust)" },
+      { "<leader>dr", "<cmd>RustLsp debuggables<cr>", desc = "Run Debuggables (Rust)" },
+    },
+    config = function()
+      vim.g.rustaceanvim = {
+        server = {
+          settings = {
+            ["rust-analyzer"] = {
+              cargo = {
+                loadOutDirsFromCheck = true,
+                runBuildScripts = true,
+              },
+              -- Add clippy lints for Rust.
+              checkOnSave = {
+                allFeatures = true,
+                command = "clippy",
+                extraArgs = { "--no-deps" },
+              },
+              procMacro = {
+                enable = true,
+                ignored = {
+                  ["async-trait"] = { "async_trait" },
+                  ["napi-derive"] = { "napi" },
+                  ["async-recursion"] = { "async_recursion" },
+                },
+              },
+              inlayHints = {
+                enable = true,
+                showParameterNames = true,
+              },
+            },
+          },
+        },
+        dap = {
+          adapter = setup_rust_dap(),
+        },
+      }
+    end,
+  },
+  {
+    "folke/trouble.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    cmd = { "TroubleToggle", "Trouble" },
+    opts = { use_diagnostic_signs = false },
+    keys = {},
+  },
+  {
+    "theHamsta/nvim-dap-virtual-text",
+    opts = {},
   },
 }
