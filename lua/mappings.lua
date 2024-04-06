@@ -21,6 +21,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
     map("n", "gr", vim.lsp.buf.references, opts)
     map("n", "<leader>fs", require("telescope.builtin").lsp_dynamic_workspace_symbols, opts)
     map("n", "<leader>ds", require("telescope.builtin").lsp_document_symbols, opts)
+    if not (ev.data and evn.data.client_id) then
+      return
+    end
+    local bufnr = ev.buf
+    local client = vim.lsp.get_client_by_id(ev.data.client_id)
   end,
 })
 -- map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>")

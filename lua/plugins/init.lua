@@ -20,6 +20,7 @@ local setup_rust_dap = function()
   print(vim.inspect(adapter))
   return adapter
 end
+
 return {
   {
     "stevearc/conform.nvim",
@@ -240,6 +241,15 @@ return {
   },
   {
     "sindrets/diffview.nvim",
+    opts = {},
+  },
+  {
+    "folke/todo-comments.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    opts = {},
+  },
+  {
+    "simrat39/inlay-hints.nvim",
     opts = {},
   },
 }
