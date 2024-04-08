@@ -5,10 +5,8 @@ local capabilities = require("nvchad.configs.lspconfig").capabilities
 
 local lspconfig = require "lspconfig"
 local masonlspconfig = require "mason-lspconfig"
-local servers = { "html", "cssls", "omnisharp", "angularls" }
-
 local on_attach_wrapper = function(client, bufnr)
-  vim.lsp.inlay_hint.enable(bufnr)
+  vim.lsp.inlay_hint.enable(bufnr, true)
   on_attach(client, bufnr)
 end
 masonlspconfig.setup {}
@@ -17,12 +15,19 @@ masonlspconfig.setup_handlers {
   -- and will be called for each installed server that doesn't have
   -- a dedicated handler.
   function(server_name) -- default handler (optional)
-    require("lspconfig")[server_name].setup {}
+    require("lspconfig")[server_name].setup {
+      on_attach = on_attach_wrapper,
+      capabilities = capabilities,
+      on_init = on_init,
+    }
   end,
   -- Next, you can provide a dedicated handler for specific servers.
   -- For example, a handler override for the `rust_analyzer`:
   ["omnisharp"] = function()
     lspconfig.omnisharp.setup {
+      on_init = on_init,
+      on_attach = on_attach,
+      capabilities = capabilities,
       enable_roslyn_analyzers = true,
       enable_import_completion = true,
       handlers = {
@@ -35,6 +40,9 @@ masonlspconfig.setup_handlers {
   end,
   ["rust_analyzer"] = function()
     lspconfig["rust_analyzer"].setup {
+      on_attach = on_attach_wrapper,
+      capabilities = capabilities,
+      on_init = on_init,
       imports = {
         granularity = {
           group = "module",
@@ -49,17 +57,24 @@ masonlspconfig.setup_handlers {
       procMacro = {
         enable = true,
       },
+      diagnostics = {
+        enable = true,
+      },
+      inlayHints = {
+        bindingModeHints = {
+          enable = true,
+        },
+        closureCaptureHints = {
+          enable = true,
+        },
+        closureReturnTypeHints = {
+          enable = true,
+        },
+      },
     }
   end,
 }
 
-for _, lsp in ipairs(servers) do
-  lspconfig[lsp].setup {
-    on_attach = on_attach_wrapper,
-    on_init = on_init,
-    capabilities = capabilities,
-  }
-end
 --
 -- -- typescript
 -- lspconfig.tsserver.setup {

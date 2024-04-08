@@ -246,10 +246,7 @@ return {
   {
     "folke/todo-comments.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
-    opts = {},
-  },
-  {
-    "simrat39/inlay-hints.nvim",
+    lazy = false,
     opts = {},
   },
 }

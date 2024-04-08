@@ -3,12 +3,39 @@ local dap = require "dap"
 
 local map = vim.keymap.set
 
+vim.lsp.commands["rust-analyzer.runSingle"] = function(command)
+  print(vim.inspect(command))
+  local handle, pid = vim.uv.spawn("cargo", {
+    args = command.args,
+    cwd = command.workspaceRoot,
+    detached = true,
+  }, function(code, signal)
+    print("exit code", code)
+    print("exit signal", signal)
+  end)
+  vim.uv.unref(handle)
+end
+
+vim.lsp.commands["rust-analyzer.debugSingle"] = function(command)
+  print(vim.inspect(command))
+  vim.uv.spawn("cargo", {
+    args = command.args,
+    cwd = command.workspaceRoot,
+  }, function(code, signal)
+    print("exit code", code)
+    print("exit signal", signal)
+  end)
+end
+
+vim.lsp.commands["rust-analyzer.showReferences"] = function(command)
+  vim.lsp.buf.implementation()
+end
+
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("UserLspConfig", {}),
   callback = function(ev)
     -- Enable completion triggered by <c-x><c-o>
     vim.bo[ev.buf].omnifunc = "v:lua.vim.lsp.omnifunc"
-
     -- Buffer local mappings.
     -- See `:help vim.lsp.*` for documentation on any of the below functions
     local opts = { buffer = ev.buf }
@@ -21,11 +48,17 @@ vim.api.nvim_create_autocmd("LspAttach", {
     map("n", "gr", vim.lsp.buf.references, opts)
     map("n", "<leader>fs", require("telescope.builtin").lsp_dynamic_workspace_symbols, opts)
     map("n", "<leader>ds", require("telescope.builtin").lsp_document_symbols, opts)
-    if not (ev.data and evn.data.client_id) then
-      return
-    end
-    local bufnr = ev.buf
-    local client = vim.lsp.get_client_by_id(ev.data.client_id)
+    map("n", "<leader>cr", vim.lsp.codelens.run, { desc = "Run CodeLense" })
+    map("n", "<leader>cl", function()
+      vim.lsp.codelens.refresh {
+        bufnr = ev.buf,
+      }
+      local available = vim.lsp.codelens.get(ev.buf)
+      if available == nil or next(available) == nil then
+        return
+      end
+      vim.lsp.codelens.display(available, ev.data.client_id, ev.buf)
+    end, { desc = "Show CodeLense" })
   end,
 })
 -- map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>")
